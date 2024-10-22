@@ -1,5 +1,6 @@
 package com.mursalin.spring_security_series_1.config;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationProvider;
@@ -18,7 +19,11 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
         return httpSecurity
-                .authorizeHttpRequests(request -> request.anyRequest().authenticated())
+                .csrf(customizer -> customizer.disable())
+                .authorizeHttpRequests(request -> request
+                        .requestMatchers("/register")
+                        .permitAll()
+                        .anyRequest().authenticated())
                 .formLogin(Customizer.withDefaults())
                 .httpBasic(Customizer.withDefaults())
                 .build();
@@ -26,13 +31,16 @@ public class SecurityConfig {
 
     private UserDetailsService userDetailsService;
 
+    @Autowired
     public SecurityConfig(UserDetailsService userDetailsService) {
         this.userDetailsService = userDetailsService;
     }
 
     @Bean
     public AuthenticationProvider authenticationProvider() {
-        DaoAuthenticationProvider authenticationProvider = new DaoAuthenticationProvider(new BCryptPasswordEncoder(12));
+        DaoAuthenticationProvider authenticationProvider = new DaoAuthenticationProvider();
+
+        authenticationProvider.setPasswordEncoder(new BCryptPasswordEncoder(12));
 
         authenticationProvider.setUserDetailsService(userDetailsService);
 
